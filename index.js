@@ -1,14 +1,15 @@
 /*
-*     Primary file for the API
-*
+	Primary file for the API
 */
 
 const http = require("http");
 const https = require("https");
 const url = require("url");
 const StringDecoder = require("string_decoder").StringDecoder;
-const config = require("./config");
+const config = require("./lib/config");
 const fs = require("fs");
+const handlers = require("./lib/handlers");
+const helpers = require("./lib/helpers");
 
 const httpServer = http.createServer((req, res) => {
   unifiedServer(req, res);
@@ -49,7 +50,6 @@ const unifiedServer = (req, res) => {
   });
   req.on("end", () => {
     buffer += decoder.end();
-
     const chosenHandler =
       typeof router[trimmedPath] !== "undefined"
         ? router[trimmedPath]
@@ -60,7 +60,7 @@ const unifiedServer = (req, res) => {
       queryStringObject,
       method,
       headers,
-      buffer
+      payload: helpers.parseJsonToObject(buffer)
     };
 
     chosenHandler(data, (statusCode, payload) => {
@@ -79,17 +79,9 @@ const unifiedServer = (req, res) => {
   });
 };
 
-const handlers = {};
-
-handlers.ping = (data, cb) => {
-  cb(200);
-};
-
-handlers.notFound = (data, cb) => {
-  cb(404);
-};
-
 // Router
 const router = {
-  ping: handlers.ping
+  ping: handlers.ping,
+  users: handlers.users,
+  tokens: handlers.tokens
 };
